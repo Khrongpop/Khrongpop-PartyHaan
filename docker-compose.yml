@@ -1,0 +1,59 @@
+version: "3.7"
+
+services:
+    frontend:
+        container_name: PartyHaan_frontend
+        build:
+            context: "./frontend"
+            dockerfile: Dockerfile
+        volumes:
+            - ./frontend:/app
+            - /app/node_modules
+        environment:
+            PORT: 8080
+            CHOKIDAR_USEPOLLING: "true"
+            BASE_URL: "api"
+        stdin_open: true
+        ports:
+            - 8080:8080
+        networks:
+            - partyhaannetwork
+        depends_on:
+            - api
+    api:
+        container_name: PartyHaan_api
+        build:
+            context: "./api"
+            dockerfile: Dockerfile
+        volumes:
+            - ./api:/go/src/app
+        environment:
+            - GOROOT:/usr/local/go/bin
+        networks:
+            - partyhaannetwork
+        ports:
+            - 1323:1323
+        environment:
+            PORT: 1323
+        command: "go run server.go"
+        depends_on:
+            - db
+
+    db:
+        container_name: PartyHaan_db
+        image: postgres
+        restart: unless-stopped
+        environment:
+            POSTGRES_PASSWORD: root
+            POSTGRES_USER: root
+            POSTGRES_DB: PartyHaan
+        # volumes:
+            # - ./db/init.sql:/docker-entrypoint-initdb.d/init.sql
+        networks:
+            - partyhaannetwork
+        ports:
+            - 5432:5432
+
+networks:
+    partyhaannetwork:
+        driver: bridge
